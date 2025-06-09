@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Satellite Tracker</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="scene-container"></div>
+    <div id="loader">
+        <div class="spinner"></div>
+        <p id="loader-text">Fetching and calculating satellite data...</p>
+    </div>
+
+    <!-- UPDATED HUD Structure -->
+    <div id="hud">
+        <h1>Interactive Satellite Tracker</h1>
+        <p>Satellites loaded: <span id="sat-count">0</span></p>
+        <p>Current UTC Time: <span id="time-display"></span></p>
+
+        <!-- A simpler, more robust way to create the section -->
+        <hr class="hud-separator">
+        <h3>Controls</h3>
+        
+        <div class="control-item">
+            <label for="time-warp">Time Warp: <span id="time-warp-value">1</span>x</label>
+            <input type="range" id="time-warp" min="0" max="3" step="0.01" value="0">
+        </div>
+        <div class="control-item">
+            <label for="satellite-size">Satellite Size: <span id="satellite-size-value">1.5</span></label>
+            <input type="range" id="satellite-size" min="0.5" max="5" step="0.1" value="1.5">
+        </div>
+        <button id="toggle-orbits">Toggle Orbits</button>
+        <button id="learn-more-btn">Learn More</button>
+    </div>
+
+    <div id="table-container">
+        <div id="filters-container">
+            <div class="control-item">
+                <label for="satellite-type">Satellite Group</label>
+                <select id="satellite-type">
+                    <option value="active" selected>All Active Satellites</option>
+                    <option value="gps-ops">GPS</option>
+                    <option value="glo-ops">GLONASS</option>
+                    <option value="galileo">Galileo</option>
+                    <option value="beidou">BeiDou</option>
+                    <option value="science">Science</option>
+                    <option value="weather">Weather</option>
+                    <option value="stations">Space Stations</option>
+                    <option value="starlink">Starlink</option>
+                    <option value="tle-new">Last 30 Days</option>
+                </select>
+            </div>
+            <div class="control-item">
+                <label for="launch-year">Max Launch Year: <span id="launch-year-value">2024</span></label>
+                <input type="range" id="launch-year" min="1957" max="2024" step="1" value="2024">
+            </div>
+             <div class="control-item">
+                <input type="text" id="search-input" placeholder="Search displayed satellites...">
+            </div>
+        </div>
+        <button id="toggle-table">Show/Hide Satellite Data</button>
+        <div id="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>NORAD ID</th>
+                        <th>Inclination (°)</th>
+                        <th>Period (min)</th>
+                        <th>Apogee (km)</th>
+                        <th>Perigee (km)</th>
+                    </tr>
+                </thead>
+                <tbody id="sat-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div id="modal-container" class="modal-hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn">×</span>
+            <h2>About the World of Satellites</h2>
+            
+            <div class="modal-section">
+                <h3>1. The Evolution of Satellites</h3>
+                <p>The dawn of the space age began on October 4, 1957, with the Soviet Union's launch of Sputnik 1. This 83 kg metal sphere did little more than transmit a simple radio beep, but it fundamentally changed the world, sparking the Space Race and ushering in an era of technological advancement. Early satellites were experimental, often focused on proving technologies, scientific discovery (like the discovery of the Van Allen radiation belts by Explorer 1), and military reconnaissance.</p>
+                <p>Over the decades, satellites have evolved from large, single-purpose, government-funded projects into a diverse ecosystem of sizes and functions, driven by both public and commercial interests. Key advancements include:</p>
+                <ul>
+                    <li><strong>Miniaturization:</strong> The development of CubeSats—small, standardized satellites often used for research—has dramatically lowered the cost of access to space.</li>
+                    <li><strong>Constellations:</strong> Instead of a single, powerful satellite, massive interconnected networks (or "mega-constellations") are now being deployed. SpaceX's Starlink and OneWeb are prime examples, using thousands of small satellites in Low Earth Orbit to provide global, low-latency internet coverage.</li>
+                    <li><strong>Reusable Rockets:</strong> The advent of reusable launch vehicles, pioneered by SpaceX, has drastically reduced launch costs, enabling the rapid deployment of these new constellations.</li>
+                </ul>
+                <p>The number of active satellites has grown exponentially, from a handful in the 1960s to over 11,000 today. This rapid growth offers incredible capabilities but also presents significant challenges in managing space traffic and mitigating orbital debris.</p>
+            </div>
+
+            <div class="modal-section">
+                <h3>2. Types of Orbits</h3>
+                <p>A satellite's orbit is the path it takes around a celestial body. The choice of orbit is critical and depends entirely on the satellite's mission. The primary types are:</p>
+                <ul>
+                    <li><strong>Low Earth Orbit (LEO):</strong> Altitudes from 160 km to 2,000 km. Satellites in LEO travel at very high speeds (~7.8 km/s) and typically orbit the Earth in about 90 minutes. This is the most common orbit for imaging satellites, the International Space Station (ISS), and mega-constellations like Starlink, as it provides high-resolution views of the Earth and low communication latency.</li>
+                    <li><strong>Medium Earth Orbit (MEO):</strong> Altitudes between 2,000 km and 35,786 km. This orbit is a compromise between LEO and GEO. It's most famously used by navigation constellations like GPS (USA), GLONASS (Russia), Galileo (Europe), and BeiDou (China).</li>
+                    <li><strong>Geosynchronous & Geostationary Orbit (GSO/GEO):</strong> At a precise altitude of 35,786 km, a satellite in a circular, equatorial orbit has an orbital period of exactly 24 hours. This means it appears to hover motionless over a single point on the Earth's surface. This is ideal for weather satellites (like GOES) and traditional broadcast television satellites.</li>
+                    <li><strong>Highly Elliptical Orbit (HEO):</strong> These oblong orbits have a low perigee (closest point) and a very high apogee (farthest point). This allows them to "dwell" for long periods over specific regions of the Earth, making them useful for communications and surveillance over high-latitude areas like the polar regions, which are poorly served by GEO satellites.</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>3. Launch and Operations</h3>
+                <p>Getting a satellite into orbit and keeping it there is a complex process.</p>
+                <ul>
+                    <li><strong>Launch:</strong> Satellites are carried to space by rockets. To reach orbit, a rocket must not only go up but also achieve a tremendous horizontal velocity. The rocket releases the satellite at the desired altitude and speed, at which point the satellite's momentum and Earth's gravity are balanced, and it begins to "fall" around the Earth.</li>
+                    <li><strong>Control and Station-Keeping:</strong> Ground stations constantly communicate with satellites to monitor their health and command them. Satellites are equipped with small thrusters to perform "station-keeping" maneuvers. These are necessary to counteract the small but persistent forces of atmospheric drag (in LEO), gravitational pulls from the Sun and Moon, and solar radiation pressure, all of which can alter an orbit over time.</li>
+                </ul>
+            </div>
+            
+            <div class="modal-section">
+                <h3>4. Technologically Advanced Satellites</h3>
+                <p>While every satellite is a marvel of engineering, some stand out for their groundbreaking capabilities:</p>
+                <ul>
+                    <li><strong>James Webb Space Telescope (JWST):</strong> The successor to Hubble, JWST observes the universe in infrared from a special orbit around the second Lagrange point (L2), 1.5 million km from Earth. Its massive, gold-coated beryllium mirror and advanced instruments allow it to see the first stars and galaxies that formed after the Big Bang.</li>
+                    <li><strong>GOES-R Series:</strong> These are the most advanced geostationary weather satellites. They can scan the Western Hemisphere every 5 minutes, mapping lightning in real-time and providing critical data for tracking hurricanes and severe storms with unprecedented speed and accuracy.</li>
+                    <li><strong>GRACE-FO (Gravity Recovery and Climate Experiment - Follow-On):</strong> This unique mission consists of two satellites chasing each other in the same orbit. By measuring minuscule changes in the distance between them using a microwave ranging system, they can map Earth's gravity field with incredible precision. This allows scientists to track the movement of water, the melting of ice sheets, and changes within the Earth's crust.</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>5. How This Application Works</h3>
+                <p>This interactive visualization is built using modern web technologies to provide a real-time view of objects orbiting Earth.</p>
+                <ul>
+                    <li><strong>Data Source:</strong> The application fetches real-time orbital data in the form of **Two-Line Element (TLE) sets** from <a href="https://celestrak.org/" target="_blank">CelesTrak.com</a>, a trusted provider of orbital data operated by Dr. T.S. Kelso.</li>
+                    <li><strong>Orbital Calculation:</strong> It uses the robust <a href="https://github.com/shashwatak/satellite-js" target="_blank">satellite.js</a> library to parse the TLE data and propagate the satellite's position forward in time using the **SGP4** (Simplified General Perturbations) model. This is the standard algorithm used for predicting the location of Earth-orbiting objects.</li>
+                    <li><strong>3D Rendering:</strong> The entire 3D scene, including the Earth, stars, and satellites, is rendered in your browser using the <a href="https://threejs.org/" target="_blank">Three.js</a> library, which leverages WebGL for hardware-accelerated graphics.</li>
+                    <li><strong>Data Caching:</strong> To provide a fast startup experience, the application caches the most recently fetched satellite data in your browser's Local Storage. It then fetches fresh data in the background to ensure the view is up-to-date.</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>6. How to Use This Application</h3>
+                <p>Interact with the visualization using the controls and your mouse.</p>
+                <ul>
+                    <li><strong>3D View:</strong>
+                        <ul>
+                            <li><strong>Rotate:</strong> Click and drag with the left mouse button.</li>
+                            <li><strong>Pan:</strong> Click and drag with the right mouse button (or Ctrl + Left-click).</li>
+                            <li><strong>Zoom:</strong> Use the mouse scroll wheel. The view will zoom toward your cursor's location.</li>
+                        </ul>
+                    </li>
+                    <li><strong>HUD Controls (Top-Left):</strong>
+                        <ul>
+                            <li><strong>Time Warp:</strong> Speeds up the simulation to make satellite motion visible.</li>
+                            <li><strong>Satellite Size:</strong> Adjusts the size of the points representing satellites.</li>
+                            <li><strong>Toggle Orbits:</strong> Shows or hides the orbital paths for all displayed satellites.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Filter & Data Panel (Bottom):</strong>
+                        <ul>
+                            <li><strong>Satellite Group:</strong> Select a specific category of satellites to display.</li>
+                            <li><strong>Max Launch Year:</strong> Filters the view to show only satellites with an epoch year up to the selected year.</li>
+                            <li><strong>Search:</strong> Instantly filter the data table by name or NORAD ID.</li>
+                            <li><strong>Show/Hide Data:</strong> Toggles the visibility of the detailed data table. Hovering over a row in the table will highlight the corresponding satellite in yellow.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>7. Further Learning & Data Sources</h3>
+                <ul>
+                    <li><a href="https://celestrak.org/" target="_blank">CelesTrak</a>: The primary source for the TLE data used in this application. An incredible resource for orbital information.</li>
+                    <li><a href="https://www.space-track.org/" target="_blank">Space-Track.org</a>: The official U.S. Space Force source for space surveillance data.</li>
+                    <li><a href="https://heavens-above.com/" target="_blank">Heavens-Above</a>: Provides detailed sky charts and pass predictions for satellites.</li>
+                    <li><a href="https://en.wikipedia.org/wiki/Two-line_element_set" target="_blank">Wikipedia: Two-line element set</a>: An explanation of the TLE data format.</li>
+                </ul>
+            </div>
+            
+        </div>
+    </div>
+    
+    <footer>
+        © 2024 Accelerate Solutions, LLC
+    </footer>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="satellite.min.js"></script>
+
+    <!-- Our main script -->
+    <script src="main.js"></script>
+</body>
+</html>
